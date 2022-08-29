@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.realluck.wheater_app.R
 import com.realluck.wheater_app.databinding.ListItemBinding
+import com.squareup.picasso.Picasso
 
 class WeatherAdapter : ListAdapter<WeatherModel, WeatherAdapter.Holder>(Comparator()) {
 
@@ -17,7 +18,8 @@ class WeatherAdapter : ListAdapter<WeatherModel, WeatherAdapter.Holder>(Comparat
         fun init(item: WeatherModel) = with(binding) {
             textItemDate.text = item.time
             textItemWeather.text = item.weather
-            textItemTemp.text = item.tempCurrent
+            textItemTemp.text = "${item.tempCurrent}°C"
+            Picasso.get().load("https:" + item.imageWeather).into(imageItem)
         }
     }
 
