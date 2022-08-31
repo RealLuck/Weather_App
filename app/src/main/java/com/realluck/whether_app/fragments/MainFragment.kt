@@ -68,9 +68,9 @@ class MainFragment : Fragment() {
         model.liveDataCurrent.observe(viewLifecycleOwner) {
             textData.text = it.time
             textCity.text = it.city
-            textTemp.text = "${it.tempCurrent}°C"
+            textTemp.text = it.tempCurrent.ifEmpty { "${it.tempMax}°C/${it.tempMin}" } + "°C"
             textWeather.text = it.weather
-            textMaxMinTemp.text = "${it.tempMax}°C/${it.tempMin}°C"
+            textMaxMinTemp.text = if (it.tempCurrent.isEmpty()) "" else "${it.tempMax}°C/${it.tempMin}°C"
             Picasso.get().load("https:" + it.imageWeather).into(imageWeather)
         }
     }
@@ -92,9 +92,9 @@ class MainFragment : Fragment() {
 
     private fun requestWeather(city: String) {
         val url = "https://api.weatherapi.com/v1/forecast.json?key=" +
-            "$API_KEY" +
+            API_KEY +
             "&q=" +
-            "$city" +
+            city +
             "&days=" +
             "3" +
             "&aqi=no"
@@ -132,7 +132,7 @@ class MainFragment : Fragment() {
                 .getJSONObject("condition")
                 .getString("text"),
             dataObject.getJSONObject("current")
-                .getString("temp_c"),
+                .getString("temp_c").toFloat().toInt().toString(),
             weatherItem.tempMax,
             weatherItem.tempMin,
             dataObject.getJSONObject("current")
@@ -159,9 +159,9 @@ class MainFragment : Fragment() {
                     .getString("text"),
                 "",
                 day.getJSONObject("day")
-                    .getString("maxtemp_c"),
+                    .getString("maxtemp_c").toFloat().toInt().toString(),
                 day.getJSONObject("day")
-                    .getString("mintemp_c"),
+                    .getString("mintemp_c").toFloat().toInt().toString(),
                 day.getJSONObject("day")
                     .getJSONObject("condition")
                     .getString("icon"),
