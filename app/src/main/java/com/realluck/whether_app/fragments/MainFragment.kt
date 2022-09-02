@@ -1,6 +1,7 @@
 package com.realluck.whether_app.fragments
 
 import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -9,12 +10,17 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.activityViewModels
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.tabs.TabLayoutMediator
 import com.realluck.wheater_app.databinding.FragmentMainBinding
 import com.realluck.whether_app.MainViewModel
@@ -26,6 +32,7 @@ import org.json.JSONObject
 const val API_KEY = "2bb95ee6c7f14c32b5f163052222008"
 
 class MainFragment : Fragment() {
+    lateinit var locationClient: FusedLocationProviderClient
     private val fragmentList = listOf(
         HoursFragment.newInstance(),
         DaysFragment.newInstance()
@@ -52,16 +59,38 @@ class MainFragment : Fragment() {
         checkPermission()
         init()
         updateCurrentData()
-        requestWeather("London")
+        getLocation()
     }
 
     private fun init() = with(binding) {
+        locationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         val adapter = ViewPagerAdapter(activity as FragmentActivity, fragmentList)
         viewPager.adapter = adapter
         TabLayoutMediator(tabs, viewPager) {
             tab, position ->
             tab.text = tabList[position]
         }.attach()
+        buttonSync.setOnClickListener {
+            getLocation()
+        }
+    }
+    private fun getLocation() {
+        val token = CancellationTokenSource()
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        locationClient
+            .getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, token.token)
+            .addOnCompleteListener {
+                requestWeather("${it.result.latitude},${it.result.longitude}")
+            }
     }
 
     private fun updateCurrentData() = with(binding) {
